@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller & Installer build artifacts
+build/
+build_installer/
+dist/
+dist_installer/
+*.spec
+installer_src/payload.zip
+
+# User data, local caches and runtime logs
+cache/
+downloads/
+config.json
+*.log
+
+# C# / .NET build artifacts
+tools/realm_reader/bin/
+tools/realm_reader/obj/
+
+# Windows
+Thumbs.db
+Desktop.ini
+*.lnk

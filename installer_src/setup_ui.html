@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Установка osu! Map Roulette</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    background: #09090b;
+    color: #f4f4f5;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    border: 1px solid #27272a;
+  }
+
+  /* Left Anime Art Panel */
+  .art-panel {
+    position: relative;
+    width: 290px;
+    height: 100%;
+    flex-shrink: 0;
+    background: #111116;
+    overflow: hidden;
+  }
+
+  .art-panel img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    filter: brightness(0.92) contrast(1.05);
+    transition: transform 0.6s ease;
+  }
+
+  .art-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to right, rgba(9, 9, 11, 0) 55%, rgba(9, 9, 11, 1) 100%),
+      linear-gradient(to top, rgba(9, 9, 11, 0.96) 0%, rgba(9, 9, 11, 0.35) 38%, rgba(9, 9, 11, 0) 65%);
+    pointer-events: none;
+  }
+
+  .art-badge {
+    position: absolute;
+    bottom: 24px;
+    left: 22px;
+    right: 22px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .version-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255, 64, 129, 0.16);
+    border: 1px solid rgba(255, 64, 129, 0.45);
+    color: #ff6699;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    margin-bottom: 10px;
+    backdrop-filter: blur(8px);
+  }
+
+  .version-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff4081;
+    box-shadow: 0 0 8px #ff4081;
+  }
+
+  .art-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+  }
+
+  .art-sub {
+    font-size: 12px;
+    color: #a1a1aa;
+    margin-top: 3px;
+  }
+
+  /* Right Content Panel */
+  .main-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #09090b;
+    position: relative;
+  }
+
+  /* Custom Window Titlebar */
+  .titlebar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px 0 24px;
+    -webkit-app-region: drag;
+  }
+
+  .titlebar-label {
+    font-size: 12px;
+    color: #71717a;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  .window-controls {
+    display: flex;
+    gap: 6px;
+    -webkit-app-region: no-drag;
+  }
+
+  .win-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #a1a1aa;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .win-btn:hover {
+    background: #27272a;
+    color: #ffffff;
+  }
+
+  .win-btn.close:hover {
+    background: #e11d48;
+    color: #ffffff;
+  }
+
+  /* Screen Container */
+  .content {
+    flex: 1;
+    padding: 12px 32px 28px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .screen {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    animation: fadeIn 0.22s ease;
+  }
+
+  .screen.active {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fafafa;
+    letter-spacing: -0.4px;
+    margin-bottom: 8px;
+  }
+
+  .desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #a1a1aa;
+    margin-bottom: 24px;
+  }
+
+  /* Path Selector */
+  .field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #d4d4d8;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .path-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+
+  .path-input {
+    flex: 1;
+    background: #141418;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #e4e4e7;
+    font-size: 12.5px;
+    font-family: Consolas, 'Segoe UI', monospace;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .path-input:focus {
+    border-color: #ff4081;
+  }
+
+  .btn-secondary {
+    background: #18181b;
+    border: 1px solid #27272a;
+    color: #e4e4e7;
+    padding: 0 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .btn-secondary:hover {
+    background: #27272a;
+    border-color: #3f3f46;
+  }
+
+  /* Custom Dark Checkboxes */
+  .options-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    cursor: pointer;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #111115;
+    border: 1px solid #1f1f25;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .checkbox-row:hover {
+    background: #16161c;
+    border-color: #2e2e38;
+  }
+
+  .checkbox-row input {
+    display: none;
+  }
+
+  .custom-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1.5px solid #52525b;
+    background: #09090b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .checkbox-row input:checked + .custom-check {
+    background: linear-gradient(135deg, #ff4081, #a855f7);
+    border-color: transparent;
+    box-shadow: 0 0 10px rgba(255, 64, 129, 0.35);
+  }
+
+  .custom-check svg {
+    width: 12px;
+    height: 12px;
+    stroke: #ffffff;
+    stroke-width: 2.8;
+    fill: none;
+    opacity: 0;
+    transform: scale(0.7);
+    transition: all 0.15s;
+  }
+
+  .checkbox-row input:checked + .custom-check svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .check-text {
+    font-size: 13px;
+    color: #e4e4e7;
+    font-weight: 500;
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid #18181b;
+  }
+
+  .space-info {
+    font-size: 12px;
+    color: #71717a;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ff4081 0%, #c026d3 100%);
+    border: none;
+    color: #ffffff;
+    padding: 11px 28px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(255, 64, 129, 0.3);
+    transition: transform 0.12s, box-shadow 0.15s, filter 0.15s;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 6px 22px rgba(255, 64, 129, 0.45);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  /* Progress Screen */
+  .progress-wrap {
+    margin-top: 32px;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .progress-status {
+    font-size: 13px;
+    color: #e4e4e7;
+    font-weight: 500;
+  }
+
+  .progress-pct {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ff4081;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 10px;
+    background: #18181b;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid #27272a;
+  }
+
+  .progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff4081, #a855f7);
+    border-radius: 999px;
+    box-shadow: 0 0 12px rgba(255, 64, 129, 0.5);
+    transition: width 0.15s ease-out;
+  }
+
+  .progress-file {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: #71717a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: Consolas, monospace;
+  }
+
+  /* Done Screen */
+  .done-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    color: #4ade80;
+  }
+
+  .error-box {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+  <div class="art-panel pywebview-drag-region">
+    <img id="hero-art" src="" alt="Anime Art">
+    <div class="art-overlay"></div>
+    <div class="art-badge">
+      <div class="version-pill">
+        <span class="version-dot"></span>
+        <span>RELEASE v1.0.0</span>
+      </div>
+      <div class="art-title">osu! Map Roulette</div>
+      <div class="art-sub">Lazer &amp; Stable Companion</div>
+    </div>
+  </div>
+
+  <div class="main-panel">
+    <div class="titlebar pywebview-drag-region">
+      <span class="titlebar-label">МАСТЕР УСТАНОВКИ</span>
+      <div class="window-controls">
+        <button class="win-btn" onclick="minimizeWin()" title="Свернуть">—</button>
+        <button class="win-btn close" onclick="closeWin()" title="Закрыть">✕</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Screen 1: Configuration -->
+      <div id="screen-setup" class="screen active">
+        <div>
+          <h1>Добро пожаловать!</h1>
+          <p class="desc">
+            Установите <b>osu! Map Roulette</b> — нативное приложение для прокрутки карт с умным подбором модов, 5 стилями игры и авто-проверкой скоров.
+          </p>
+
+          <label class="field-label">Папка установки</label>
+          <div class="path-row">
+            <input id="install-path" class="path-input" type="text" value="">
+            <button class="btn-secondary" onclick="browseDir()">Обзор...</button>
+          </div>
+
+          <div class="options-group">
+            <label class="checkbox-row">
+              <input id="chk-desktop" type="checkbox" checked>
+              <span class="custom-check">
+                <svg viewBox="0 0 16 16"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5"></polyline></svg>
+              </span>
+              <span class="check-text">Создать ярлык на Рабочем столе</span>
+            </label>
+
+            <label class="checkbox-row">
+              <input id="chk-startmenu" type="checkbox" checked>
+              <span class="custom-check">
+                <svg viewBox="0 0 16 16"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5"></polyline></svg>
+              </span>
+              <span class="check-text">Добавить ярлык в меню «Пуск»</span>
+            </label>
+          </div>
+
+          <div id="error-box" class="error-box"></div>
+        </div>
+
+        <div class="footer">
+          <span class="space-info">Требуется ~170 МБ на диске</span>
+          <button class="btn-primary" onclick="startInstall()">Установить →</button>
+        </div>
+      </div>
+
+      <!-- Screen 2: Installing -->
+      <div id="screen-progress" class="screen">
+        <div>
+          <h1>Идёт установка...</h1>
+          <p class="desc">Пожалуйста, подождите. Копируем компоненты приложения и настраиваем ярлыки.</p>
+
+          <div class="progress-wrap">
+            <div class="progress-header">
+              <span id="prog-status" class="progress-status">Подготовка...</span>
+              <span id="prog-pct" class="progress-pct">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="prog-fill" class="progress-fill"></div>
+            </div>
+            <div id="prog-file" class="progress-file">Инициализация распаковки...</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <span class="space-info">Не закрывайте окно до завершения</span>
+        </div>
+      </div>
+
+      <!-- Screen 3: Complete -->
+      <div id="screen-done" class="screen">
+        <div>
+          <div class="done-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h1>Установка завершена!</h1>
+          <p class="desc">
+            <b>osu! Map Roulette</b> готов к работе. Нажмите «Готово», чтобы закрыть установщик.
+          </p>
+
+          <label class="checkbox-row">
+            <input id="chk-launch" type="checkbox" checked>
+            <span class="custom-check">
+              <svg viewBox="0 0 16 16"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5"></polyline></svg>
+            </span>
+            <span class="check-text">Запустить osu! Map Roulette сразу после выхода</span>
+          </label>
+        </div>
+
+        <div class="footer">
+          <span class="space-info">Приятной игры в osu!</span>
+          <button class="btn-primary" onclick="finishSetup()">Готово</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  window.addEventListener('pywebviewready', async () => {
+    try {
+      const info = await window.pywebview.api.get_init_info();
+      document.getElementById('install-path').value = info.default_dir;
+      if (info.hero_art_b64) {
+        document.getElementById('hero-art').src = 'data:image/png;base64,' + info.hero_art_b64;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  async function minimizeWin() {
+    await window.pywebview.api.minimize_window();
+  }
+
+  async function closeWin() {
+    await window.pywebview.api.close_window();
+  }
+
+  async function browseDir() {
+    const dir = await window.pywebview.api.browse_dir();
+    if (dir) {
+      document.getElementById('install-path').value = dir;
+    }
+  }
+
+  async function startInstall() {
+    const installDir = document.getElementById('install-path').value.trim();
+    const desktop = document.getElementById('chk-desktop').checked;
+    const startmenu = document.getElementById('chk-startmenu').checked;
+
+    if (!installDir) {
+      showError('Укажите папку установки.');
+      return;
+    }
+
+    document.getElementById('error-box').style.display = 'none';
+    showScreen('screen-progress');
+    await window.pywebview.api.start_install(installDir, desktop, startmenu);
+  }
+
+  function updateProgress(pct, status, currentFile) {
+    document.getElementById('prog-pct').textContent = pct + '%';
+    document.getElementById('prog-fill').style.width = pct + '%';
+    if (status) document.getElementById('prog-status').textContent = status;
+    if (currentFile) document.getElementById('prog-file').textContent = currentFile;
+  }
+
+  function onInstallComplete() {
+    updateProgress(100, 'Завершено!', 'Все файлы успешно установлены');
+    setTimeout(() => showScreen('screen-done'), 350);
+  }
+
+  function onInstallError(msg) {
+    showScreen('screen-setup');
+    showError('Ошибка установки: ' + msg);
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('error-box');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  async function finishSetup() {
+    const installDir = document.getElementById('install-path').value.trim();
+    const launch = document.getElementById('chk-launch').checked;
+    await window.pywebview.api.finish_setup(installDir, launch);
+  }
+</script>
+</body>
+</html>

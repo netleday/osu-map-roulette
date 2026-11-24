@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>osu! Map Roulette</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/icon.png" type="image/png">
+</head>
+<body>
+    <!-- BACKGROUND ANIME & GLASS OVERLAY -->
+    <div id="appBgLayer" class="app-bg-layer"></div>
+    <div id="appBgOverlay" class="app-bg-overlay"></div>
+
+    <!-- LEFT SIDEBAR: ALL SETTINGS -->
+    <aside id="mainSidebar" class="sidebar">
+        <!-- Logo / Title -->
+        <div class="sidebar-header">
+            <img src="/static/icon.png" alt="Logo" class="brand-logo">
+            <div class="brand-text">
+                <div class="brand-title">OSU! MAP ROULETTE</div>
+                <div class="brand-sub">Lazer Edition • CS2 Reel</div>
+            </div>
+        </div>
+
+        <!-- Source Selector -->
+        <div class="sidebar-section">
+            <div class="section-label">ИСТОЧНИК КАРТ</div>
+            <div class="source-toggle">
+                <button id="btnSourceLocal" class="source-tab active" data-source="local">
+                    <span>📁 Локально</span>
+                    <span id="localMapCountBadge" class="badge">1354</span>
+                </button>
+                <button id="btnSourceApi" class="source-tab" data-source="api">
+                    <span>🌐 Онлайн</span>
+                </button>
+            </div>
+            <div id="sourceDesc" class="source-desc">База client.realm (%appdata%\osu)</div>
+        </div>
+
+        <!-- Filter: Star Rating -->
+        <div class="sidebar-section">
+            <div class="section-label-row">
+                <span>СЛОЖНОСТЬ (SR)</span>
+                <span id="srLabel" class="val-pill">3.5★ – 4.8★</span>
+            </div>
+            <div class="inputs-row">
+                <input type="number" id="inputSrMin" min="0" max="10" step="0.1" value="3.5">
+                <span class="sep">—</span>
+                <input type="number" id="inputSrMax" min="0" max="10" step="0.1" value="4.8">
+            </div>
+            <div class="sr-presets">
+                <button type="button" class="sr-preset-btn" data-min="3.0" data-max="4.0">3–4★</button>
+                <button type="button" class="sr-preset-btn" data-min="4.0" data-max="5.0">4–5★</button>
+                <button type="button" class="sr-preset-btn" data-min="5.0" data-max="6.5">5–6.5★</button>
+                <button type="button" class="sr-preset-btn" data-min="6.5" data-max="8.5">6.5+★</button>
+            </div>
+        </div>
+
+        <!-- Filter: BPM -->
+        <div class="sidebar-section">
+            <div class="section-label-row">
+                <span>ТЕМП (BPM)</span>
+                <span id="bpmLabel" class="val-pill">120 – 260</span>
+            </div>
+            <div class="inputs-row">
+                <input type="number" id="inputBpmMin" min="60" max="400" step="5" value="120">
+                <span class="sep">—</span>
+                <input type="number" id="inputBpmMax" min="60" max="400" step="5" value="260">
+            </div>
+        </div>
+
+        <!-- Filter: Track Length -->
+        <div class="sidebar-section">
+            <div class="section-label-row">
+                <span>ДЛИНА КАРТЫ</span>
+                <span id="lengthLabel" class="val-pill">0:30 – 5:00</span>
+            </div>
+            <div class="inputs-row">
+                <input type="number" id="inputLengthMin" min="15" max="1200" step="15" value="30">
+                <span class="sep">—</span>
+                <input type="number" id="inputLengthMax" min="15" max="1200" step="15" value="300">
+            </div>
+        </div>
+
+        <!-- Filter: Status -->
+        <div class="sidebar-section">
+            <div class="section-label">СТАТУС КАРТЫ</div>
+            <select id="selectStatus" class="select-field">
+                <option value="ranked" selected>Ranked (Рейтинговые)</option>
+                <option value="loved">Loved (Любимые)</option>
+                <option value="graveyard">Pending / Graveyard</option>
+                <option value="any">Все карты</option>
+            </select>
+        </div>
+
+        <!-- Filter: Pattern Style -->
+        <div class="sidebar-section">
+            <div class="section-label">ТИП ПАТТЕРНОВ</div>
+            <select id="selectPatternType" class="select-field">
+                <option value="any" selected>Любой (Any)</option>
+                <option value="aim">🎯 Jump Aim (Aimslop)</option>
+                <option value="flow_aim">🌊 Flow Aim (Спейсед)</option>
+                <option value="stream">⚡ Streams / Speed (Стримы)</option>
+                <option value="tech">🎛️ Finger Control / Tech</option>
+                <option value="balanced">⚖️ Balanced (Баланс)</option>
+            </select>
+        </div>
+
+        <!-- Toggles -->
+        <div class="sidebar-section toggles-section">
+            <label class="toggle-row" title="Включить выпадение случайных модов">
+                <span>Барабан модов</span>
+                <div class="switch-wrap">
+                    <input type="checkbox" id="toggleRollMods" checked>
+                    <span class="slider"></span>
+                </div>
+            </label>
+            <label class="toggle-row" title="Подбирать карты так, чтобы итоговый SR с модами попадал в заданный диапазон">
+                <span>Моды в фильтрах SR/BPM</span>
+                <div class="switch-wrap">
+                    <input type="checkbox" id="toggleSmartModFilter" checked>
+                    <span class="slider"></span>
+                </div>
+            </label>
+            <label class="toggle-row" title="Автоматическое повышение сложности при пассе карты">
+                <span>Режим «Лесенка»</span>
+                <div class="switch-wrap">
+                    <input type="checkbox" id="toggleLadderMode">
+                    <span class="slider"></span>
+                </div>
+            </label>
+            <label class="toggle-row">
+                <span>Звуки рулетки</span>
+                <div class="switch-wrap">
+                    <input type="checkbox" id="toggleSounds" checked>
+                    <span class="slider"></span>
+                </div>
+            </label>
+        </div>
+
+        <!-- Ladder details (collapsible) -->
+        <div id="ladderSidebarBlock" class="ladder-sidebar-block" style="display: none;">
+            <div class="ladder-header-row">
+                <span class="ladder-badge">ЛЕСЕНКА</span>
+                <span id="ladderLevelText" class="ladder-lvl">Уровень 1</span>
+            </div>
+            <div class="ladder-stats-grid">
+                <div><span>Серия:</span> <strong id="ladderStreakVal">0</strong></div>
+                <div><span>Рекорд:</span> <strong id="ladderBestStreakVal">0</strong></div>
+                <div><span>Шаг:</span> <strong>+0.15★</strong></div>
+            </div>
+        </div>
+
+        <!-- Database status & Reindex -->
+        <div class="sidebar-bottom">
+            <button id="btnReindexLocal" class="btn-sidebar">
+                ⟳ Обновить базу client.realm
+            </button>
+            <div id="localStatusText" class="db-status-text">
+                client.realm: 1354 карты загружено
+            </div>
+        </div>
+    </aside>
+
+    <!-- RIGHT CONTENT AREA -->
+    <main class="content-area">
+        <!-- TOP TOOLBAR: Sidebar Toggle, Overlay, Theme, Profile & Volume -->
+        <header class="top-bar">
+            <div class="top-left-group">
+                <button id="btnToggleSidebar" class="btn-top-icon" title="Свернуть/развернуть левую панель">
+                    <span id="sidebarToggleIcon">⟨</span>
+                </button>
+                <div class="shortcuts-hint">
+                    <span class="key-pill">Space</span> Крутить
+                    <span class="key-sep">•</span>
+                    <span class="key-pill">Enter</span> Играть
+                    <span class="key-sep">•</span>
+                    <span class="key-pill">M</span> Превью
+                </div>
+            </div>
+
+            <!-- Top Right Group: Overlay, Theme, Profile & Volume -->
+            <div class="top-right-group">
+                <button id="btnToggleOverlay" class="btn-top-action" title="Запустить Steam-like оверлей поверх osu!(lazer)">
+                    🎮 Оверлей
+                </button>
+                <button id="btnOpenTheme" class="btn-top-action" title="Фон с аниме девочками, стекло и блюр">
+                    🎨 Оформление
+                </button>
+                <!-- Player Profile Widget -->
+                <button id="btnOpenProfile" class="profile-widget" title="Открыть профиль игрока">
+                    <img id="topProfileAvatar" src="https://assets.ppy.sh/favicon/favicon-32x32.png" alt="Avatar" class="profile-avatar-mini">
+                    <div class="profile-meta-mini">
+                        <span id="topProfileName" class="profile-name">osu! Player</span>
+                        <span id="topProfileStreak" class="profile-sub">Серия: 0 • Рекорд: 0</span>
+                    </div>
+                </button>
+
+                <!-- Volume Control -->
+                <div class="volume-widget" title="Регулировка громкости">
+                    <span id="volIcon" class="vol-icon">🔊</span>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.7">
+                    <span id="volLabel" class="vol-label">70%</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ROULETTE SECTION -->
+        <section class="roulette-section">
+            <!-- Beatmap Drum 1 -->
+            <div class="drum-container">
+                <div class="drum-marker"></div>
+                <div id="rouletteTrack" class="drum-track">
+                    <!-- Cards will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Mod Drum 2 (Toggleable) -->
+            <div id="modDrumWrapper" class="mod-drum-container">
+                <div class="mod-marker"></div>
+                <div id="modTrack" class="mod-track">
+                    <!-- Mod pills populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Big Spin Button -->
+            <div class="spin-bar">
+                <button id="btnSpin" class="btn-spin">
+                    <span>🎰 КРУТИТЬ РУЛЕТКУ</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ANTI-TILT BANNER -->
+        <div id="tiltAlertBanner" class="tilt-alert-banner" style="display: none;">
+            <div class="tilt-alert-left">
+                <span class="tilt-icon">🔥</span>
+                <div>
+                    <div class="tilt-title">Детектор тильта</div>
+                    <div class="tilt-sub">Похоже на сложный паттерн — скинуть сложность на -0.3★ для разминки?</div>
+                </div>
+            </div>
+            <div class="tilt-actions">
+                <button id="btnAntiTiltSpin" class="btn-tilt-action">Скинуть -0.3★ и крутить</button>
+                <button id="btnDismissTilt" class="btn-tilt-dismiss">✕</button>
+            </div>
+        </div>
+
+        <!-- WINNING BEATMAP RESULT CARD -->
+        <section id="winnerSection" class="winner-card" style="display: none;">
+            <div class="winner-banner">
+                <img id="winnerBannerImg" src="" alt="Cover" class="winner-cover">
+                <div class="winner-info">
+                    <div class="winner-title-row">
+                        <h2 id="winnerTitle">Song Title</h2>
+                        <div id="winnerStarBadge" class="star-badge">4.50★</div>
+                    </div>
+                    <div class="winner-sub">
+                        <span id="winnerArtist">Artist</span> • Сложность: <strong id="winnerDiffName">Insane</strong> • Маппер: <span id="winnerCreator">Mapper</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PP Calculation & Actions -->
+            <div class="winner-details">
+                <!-- PP Matrix & Stats -->
+                <div class="pp-panel">
+                    <div class="panel-heading">
+                        <div class="panel-heading-left">
+                            <span>РАСЧЁТ PP (FULL COMBO)</span>
+                            <span id="winnerPlaystyleTag" class="playstyle-pill pill-balanced">Balanced</span>
+                        </div>
+                        <span id="winnerModTag" class="mod-tag">+DT</span>
+                    </div>
+
+                    <div class="pp-grid">
+                        <div class="pp-box">
+                            <span class="acc">95.0%</span>
+                            <span id="pp95" class="pp">---</span>
+                        </div>
+                        <div class="pp-box">
+                            <span class="acc">98.0%</span>
+                            <span id="pp98" class="pp">---</span>
+                        </div>
+                        <div class="pp-box">
+                            <span class="acc">99.0%</span>
+                            <span id="pp99" class="pp">---</span>
+                        </div>
+                        <div class="pp-box ss">
+                            <span class="acc">100% SS</span>
+                            <span id="pp100" class="pp">---</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>AR: <b id="specAr">9.0</b></span>
+                        <span>OD: <b id="specOd">8.0</b></span>
+                        <span>CS: <b id="specCs">4.0</b></span>
+                        <span>HP: <b id="specHp">6.0</b></span>
+                        <span>BPM: <b id="specBpm">180</b></span>
+                        <span>Combo: <b id="specCombo">---</b></span>
+                    </div>
+
+                    <!-- Client.realm Score Verification -->
+                    <div id="scoreBox" class="score-box">
+                        <div class="score-box-header">
+                            <div class="score-title">
+                                <span>РЕЗУЛЬТАТ ПРОХОЖДЕНИЯ (osu!lazer)</span>
+                                <span id="scoreStatusBadge" class="score-poll-badge">Ожидание игры...</span>
+                            </div>
+                            <button id="btnCheckScore" class="btn-check-score">
+                                🔍 Проверить скор
+                            </button>
+                        </div>
+                        <div id="scoreView" class="score-view" style="display: none;">
+                            <div id="scoreRankPill" class="score-rank-pill">S</div>
+                            <div class="score-details-row">
+                                <div><span>Точность:</span> <strong id="scoreAcc">98.5%</strong></div>
+                                <div><span>Комбо:</span> <strong id="scoreCombo">512x</strong></div>
+                                <div><span>Миссы:</span> <strong id="scoreMisses">0</strong></div>
+                                <div><span>Реальный PP:</span> <strong id="scorePp" class="score-pp-val">174.5 PP</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Audio Player & Action Buttons -->
+                <div class="actions-panel">
+                    <div class="preview-player">
+                        <button id="btnPlayPause" class="btn-play">▶</button>
+                        <div class="player-track">
+                            <input type="range" id="seekSlider" min="0" max="100" value="0">
+                            <div class="player-time">
+                                <span id="playerCurrentTime">0:00</span>
+                                <span>Превью трека</span>
+                                <span id="playerDuration">0:30</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="buttons-row">
+                        <button id="btnPlayInLazer" class="btn-play-lazer">
+                            🚀 Играть в osu!(lazer)
+                        </button>
+                        <button id="btnLadderNext" class="btn-win" style="display: none;">
+                            ✔️ Пройдено (+Next)
+                        </button>
+                        <button id="btnLadderFail" class="btn-fail" style="display: none;">
+                            ✖ Слился
+                        </button>
+                        <a id="btnOsuWeb" href="#" target="_blank" class="btn-secondary">
+                            osu.ppy.sh
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MULTIPLAYER SYNC LOBBY -->
+        <section id="lobbySection" class="lobby-block glass-surface">
+            <div class="lobby-header">
+                <div class="lobby-title-row">
+                    <span class="lobby-badge">MULTIPLAYER SYNC</span>
+                    <span>ЛОББИ С ДРУЗЬЯМИ</span>
+                    <span id="lobbyStatusPill" class="lobby-status-pill">Не в комнате</span>
+                </div>
+                <div id="lobbyControlsDisconnected" class="lobby-controls">
+                    <button id="btnCreateLobby" class="btn-lobby-primary">➕ Создать комнату</button>
+                    <input id="inputLobbyCode" type="text" class="lobby-code-input" placeholder="OSU-1234" maxlength="12">
+                    <button id="btnJoinLobby" class="btn-lobby-secondary">Войти по коду</button>
+                </div>
+                <div id="lobbyControlsConnected" class="lobby-controls" style="display: none;">
+                    <div class="room-code-box" id="roomCodeBadge" title="Нажмите, чтобы скопировать код">
+                        <span id="roomCodeText">OSU-0000</span>
+                        <span class="copy-hint">📋</span>
+                    </div>
+                    <button id="btnLeaveLobby" class="btn-lobby-danger">Выйти</button>
+                </div>
+            </div>
+            <div id="lobbyBody" class="lobby-body" style="display: none;">
+                <div class="lobby-members-row">
+                    <span class="lobby-sub-label">Участники:</span>
+                    <div id="lobbyMembersList" class="lobby-members-list"></div>
+                </div>
+                <div class="lobby-leaderboard">
+                    <div class="lobby-sub-label" style="margin-bottom: 6px;">Живая таблица раунда</div>
+                    <div id="lobbyLeaderboardList" class="lobby-lb-list">
+                        <div class="lobby-empty">Сыграйте выпавшую карту в osu!(lazer), чтобы результаты появились здесь автоматически.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SESSION HISTORY -->
+        <section class="history-block">
+            <div class="history-head">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span>ИСТОРИЯ ВЫПАВШИХ КАРТ (СОХРАНЯЕТСЯ)</span>
+                    <button id="btnExportOsdb" class="btn-export-osdb" title="Экспортировать дропы сессии в коллекцию osu! (.osdb)">
+                        💾 Сохранить в коллекцию (.osdb)
+                    </button>
+                </div>
+                <span id="historyCountText">0 карт</span>
+            </div>
+            <div id="historyList" class="history-grid"></div>
+        </section>
+    </main>
+
+    <!-- PLAYER PROFILE MODAL -->
+    <div id="profileModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">ПРОФИЛЬ ИГРОКА OSU! (LAZER)</div>
+                <button id="btnCloseProfile" class="btn-modal-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-hero">
+                    <img id="modalProfileAvatar" src="https://assets.ppy.sh/favicon/favicon-32x32.png" alt="Avatar" class="profile-avatar-large">
+                    <div class="profile-hero-info">
+                        <div class="profile-hero-name-row">
+                            <h2 id="modalProfileName">osu! Player</h2>
+                            <span id="modalProfileCountry" class="country-badge">RU</span>
+                        </div>
+                        <div id="modalProfileId" class="profile-user-id">Online ID: ---</div>
+                        <div class="profile-hero-badges">
+                            <span class="profile-tag">osu!lazer client.realm</span>
+                            <span id="modalMaxPpBadge" class="profile-tag gold">Макс. PP: ---</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lazer Stats Grid -->
+                <div class="modal-section-title">СТАТИСТИКА LAZER</div>
+                <div class="profile-stats-grid">
+                    <div class="p-stat-box">
+                        <span class="p-stat-lbl">Всего скоров</span>
+                        <strong id="modalTotalScores" class="p-stat-val">0</strong>
+                    </div>
+                    <div class="p-stat-box">
+                        <span class="p-stat-lbl">Пройдено карт</span>
+                        <strong id="modalPassedScores" class="p-stat-val">0</strong>
+                    </div>
+                    <div class="p-stat-box">
+                        <span class="p-stat-lbl">SS Рангов</span>
+                        <strong id="modalCountSS" class="p-stat-val val-gold">0</strong>
+                    </div>
+                    <div class="p-stat-box">
+                        <span class="p-stat-lbl">S Рангов</span>
+                        <strong id="modalCountS" class="p-stat-val val-yellow">0</strong>
+                    </div>
+                    <div class="p-stat-box">
+                        <span class="p-stat-lbl">A Рангов</span>
+                        <strong id="modalCountA" class="p-stat-val val-green">0</strong>
+                    </div>
+                </div>
+
+                <!-- Roulette & Ladder Stats -->
+                <div class="modal-section-title">ПРОГРЕСС РУЛЕТКИ И «ЛЕСЕНКИ»</div>
+                <div class="profile-stats-grid">
+                    <div class="p-stat-box">
+                        <span class="p-stat-lbl">Круток рулетки</span>
+                        <strong id="modalRouletteSpins" class="p-stat-val">0</strong>
+                    </div>
+                    <div class="p-stat-box">
+                        <span class="p-stat-lbl">Текущая серия</span>
+                        <strong id="modalLadderCurrent" class="p-stat-val val-blue">0</strong>
+                    </div>
+                    <div class="p-stat-box">
+                        <span class="p-stat-lbl">Рекорд серии</span>
+                        <strong id="modalLadderBest" class="p-stat-val val-gold">0</strong>
+                    </div>
+                </div>
+
+                <!-- Playstyle Distribution -->
+                <div class="modal-section-title">РАСПРЕДЕЛЕНИЕ ПО ПЛЕЙСТАЙЛАМ</div>
+                <div class="playstyles-breakdown">
+                    <div class="pst-row">
+                        <span>🎯 Jump Aim (Aimslop)</span>
+                        <span id="pstCountAim" class="pst-val">0</span>
+                    </div>
+                    <div class="pst-row">
+                        <span>🌊 Flow Aim (Спейсед)</span>
+                        <span id="pstCountFlow" class="pst-val">0</span>
+                    </div>
+                    <div class="pst-row">
+                        <span>⚡ Streams / Speed (Стримы)</span>
+                        <span id="pstCountStream" class="pst-val">0</span>
+                    </div>
+                    <div class="pst-row">
+                        <span>🎛️ Finger Control / Tech</span>
+                        <span id="pstCountTech" class="pst-val">0</span>
+                    </div>
+                    <div class="pst-row">
+                        <span>⚖️ Balanced (Баланс)</span>
+                        <span id="pstCountBalanced" class="pst-val">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- THEME, BACKGROUND & OVERLAY SETTINGS MODAL -->
+    <div id="themeModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card theme-modal-card">
+            <div class="modal-header">
+                <div class="modal-title">🎨 ОФОРМЛЕНИЕ, ФОН И ОВЕРЛЕЙ</div>
+                <button id="btnCloseTheme" class="btn-modal-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section-title">АНИМЕ-ДЕВОЧКА НА ЗАДНИЙ ФОН</div>
+                <div id="bgPickerGrid" class="bg-picker-grid">
+                    <button type="button" class="bg-thumb-btn" data-bg="none">
+                        <div class="bg-thumb-none">🖤</div>
+                        <span>Без фона</span>
+                    </button>
+                    <button type="button" class="bg-thumb-btn active" data-bg="bg_1.png">
+                        <img src="/static/backgrounds/bg_1.png" alt="Art 1">
+                        <span>Маскот</span>
+                    </button>
+                    <button type="button" class="bg-thumb-btn" data-bg="bg_2.jpg">
+                        <img src="/static/backgrounds/bg_2.jpg" alt="Art 2">
+                        <span>Неко #1</span>
+                    </button>
+                    <button type="button" class="bg-thumb-btn" data-bg="bg_3.jpg">
+                        <img src="/static/backgrounds/bg_3.jpg" alt="Art 3">
+                        <span>Неко #2</span>
+                    </button>
+                    <button type="button" class="bg-thumb-btn" data-bg="bg_4.jpg">
+                        <img src="/static/backgrounds/bg_4.jpg" alt="Art 4">
+                        <span>Неко #3</span>
+                    </button>
+                    <button type="button" class="bg-thumb-btn" data-bg="bg_5.jpg">
+                        <img src="/static/backgrounds/bg_5.jpg" alt="Art 5">
+                        <span>Неко #4</span>
+                    </button>
+                </div>
+
+                <div class="modal-section-title" style="margin-top: 16px;">СТИЛЬ ИНТЕРФЕЙСА</div>
+                <div class="theme-style-row">
+                    <button type="button" class="style-pill-btn active" data-style="glass">✨ Стекло (Glass)</button>
+                    <button type="button" class="style-pill-btn" data-style="dark">🖤 Глубокий чёрный</button>
+                    <button type="button" class="style-pill-btn" data-style="transparent">🫧 Прозрачный</button>
+                </div>
+
+                <div class="theme-sliders-grid">
+                    <div class="theme-slider-item">
+                        <div class="section-label-row">
+                            <span>ЗАТЕМНЕНИЕ ФОНА</span>
+                            <span id="bgDimVal" class="val-pill">72%</span>
+                        </div>
+                        <input type="range" id="sliderBgDim" min="0" max="0.95" step="0.05" value="0.72">
+                    </div>
+                    <div class="theme-slider-item">
+                        <div class="section-label-row">
+                            <span>РАЗМЫТИЕ (BLUR)</span>
+                            <span id="bgBlurVal" class="val-pill">12px</span>
+                        </div>
+                        <input type="range" id="sliderBgBlur" min="0" max="30" step="1" value="12">
+                    </div>
+                </div>
+
+                <div class="modal-section-title" style="margin-top: 16px;">ИГРОВОЙ ОВЕРЛЕЙ (STEAM-LIKE)</div>
+                <div class="overlay-settings-box">
+                    <div class="overlay-setting-row">
+                        <span>Горячая клавиша переключения HUD</span>
+                        <select id="selectOverlayHotkey" class="select-field" style="width: 150px;">
+                            <option value="F9">F9</option>
+                            <option value="Shift+Tab">Shift + Tab</option>
+                            <option value="F8">F8</option>
+                            <option value="F10">F10</option>
+                        </select>
+                    </div>
+                    <div class="overlay-setting-row" style="margin-top: 8px;">
+                        <span>Быстрая крутка в оверлее (Instant Roll)</span>
+                        <select id="selectInstantRollHotkey" class="select-field" style="width: 150px;">
+                            <option value="Alt+R">Alt + R</option>
+                            <option value="F8">F8</option>
+                            <option value="Ctrl+Shift+R">Ctrl + Shift + R</option>
+                            <option value="F10">F10</option>
+                        </select>
+                    </div>
+                    <label class="toggle-row" style="margin-top: 8px;">
+                        <span>Автозапуск в игре через 1.5с после прокрутки</span>
+                        <div class="switch-wrap">
+                            <input type="checkbox" id="toggleOverlayAutoLaunch">
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+                    <label class="toggle-row" style="margin-top: 8px;">
+                        <span>Автозапуск оверлея при обнаружении osu!.exe</span>
+                        <div class="switch-wrap">
+                            <input type="checkbox" id="toggleOverlayAutostart">
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="/static/sounds.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
