@@ -23,6 +23,10 @@ class ConfigModel(BaseModel):
     ladder_streak_current: int = 0
     bg_image: str = "bg_1.png"
     ui_theme_style: str = "glass"  # "glass", "dark", "transparent"
+    theme_preset: str = "installer_pink"  # "installer_pink", "lazer_neon", "deep_ocean", "emerald_mint", "graphite_minimal", "custom"
+    custom_primary: str = "#ff4081"
+    custom_secondary: str = "#c026d3"
+    panel_opacity: float = 0.74
     bg_dim: float = 0.72
     bg_blur: int = 12
     overlay_hotkey: str = "F9"  # "F9" or "Shift+Tab"
@@ -30,6 +34,13 @@ class ConfigModel(BaseModel):
     overlay_autostart: bool = False
     overlay_auto_launch: bool = False
     sidebar_collapsed: bool = False
+    last_star_min: float = 3.5
+    last_star_max: float = 4.8
+    last_bpm_min: float = 120.0
+    last_bpm_max: float = 260.0
+    last_length_min: int = 30
+    last_length_max: int = 300
+    last_status: str = "ranked"
 
 def load_config() -> ConfigModel:
     if not CONFIG_FILE.exists():

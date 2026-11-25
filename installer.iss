@@ -2,8 +2,9 @@
 ; osu! Map Roulette - Installer Script
 
 #define MyAppName "osu! Map Roulette"
-#define MyAppVersion "1.0.0"
-#define MyAppPublisher "osu! Map Roulette Team"
+#define MyAppVersion "1.1.0"
+#define MyAppPublisher "netleday"
+#define MyAppURL "https://github.com/netleday/osu-map-roulette"
 #define MyAppExeName "osu! Map Roulette.exe"
 
 [Setup]
@@ -12,6 +13,9 @@ AppId={{C6F4B842-1279-4B52-9E28-892F13B6E41D}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+AppSupportURL={#MyAppURL}
+AppUpdatesURL={#MyAppURL}/releases
 DefaultDirName={localappdata}\Programs\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes

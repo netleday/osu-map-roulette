@@ -30,7 +30,7 @@ HERO_ART_PATH = BUNDLE_DIR / "custom_icon.png"
 ICON_ICO_PATH = BUNDLE_DIR / "icon.ico"
 
 APP_NAME = "osu! Map Roulette"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 EXE_NAME = "osu! Map Roulette.exe"
 UNINSTALL_REG_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\osuMapRoulette"
 
@@ -103,7 +103,7 @@ Start-Process cmd -ArgumentList '/c timeout /t 1 /nobreak >nul & rmdir /s /q "{i
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, UNINSTALL_REG_KEY) as key:
             winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, APP_NAME)
             winreg.SetValueEx(key, "DisplayVersion", 0, winreg.REG_SZ, APP_VERSION)
-            winreg.SetValueEx(key, "Publisher", 0, winreg.REG_SZ, "osu! Map Roulette Team")
+            winreg.SetValueEx(key, "Publisher", 0, winreg.REG_SZ, "netleday")
             winreg.SetValueEx(key, "DisplayIcon", 0, winreg.REG_SZ, str(icon_path))
             winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, str(install_path))
             winreg.SetValueEx(key, "UninstallString", 0, winreg.REG_SZ, uninstall_cmd)
@@ -234,6 +234,15 @@ class SetupApi:
 def main():
     global window
     api = SetupApi()
+
+    # Silent auto-update mode (/SILENT or /VERYSILENT)
+    args_lower = [a.lower() for a in sys.argv[1:]]
+    if "/silent" in args_lower or "/verysilent" in args_lower:
+        default_dir = str(Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "Programs" / APP_NAME)
+        api._install_worker(default_dir, create_desktop=True, create_startmenu=True)
+        api.finish_setup(default_dir, launch_app=True)
+        return
+
     html_content = UI_HTML_PATH.read_text(encoding="utf-8")
 
     if ICON_ICO_PATH.exists():

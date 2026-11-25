@@ -55,13 +55,20 @@ function formatTime(sec) {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
+const SVG_SPIN_ICON = '<svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>';
+const SVG_PLAY_ICON = '<svg class="ui-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+const SVG_PAUSE_ICON = '<svg class="ui-icon" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>';
+const SVG_VOL_HIGH = '<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+const SVG_VOL_LOW = '<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+const SVG_VOL_MUTE = '<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
+
 // Document Ready
 document.addEventListener('DOMContentLoaded', async () => {
     await initConfig();
     await initHistory();
     await initProfile();
     initUIEvents();
-    populatePlaceholderReel();
+    await loadInitialReelPreview();
     populateModReel();
     checkLocalStatus();
 });
@@ -213,6 +220,16 @@ function applyConfigToUI() {
         patSelect.value = currentConfig.pattern_style;
     }
 
+    // Saved filters
+    if (currentConfig.last_star_min !== undefined) document.getElementById('inputSrMin').value = currentConfig.last_star_min;
+    if (currentConfig.last_star_max !== undefined) document.getElementById('inputSrMax').value = currentConfig.last_star_max;
+    if (currentConfig.last_bpm_min !== undefined) document.getElementById('inputBpmMin').value = currentConfig.last_bpm_min;
+    if (currentConfig.last_bpm_max !== undefined) document.getElementById('inputBpmMax').value = currentConfig.last_bpm_max;
+    if (currentConfig.last_length_min !== undefined) document.getElementById('inputLengthMin').value = currentConfig.last_length_min;
+    if (currentConfig.last_length_max !== undefined) document.getElementById('inputLengthMax').value = currentConfig.last_length_max;
+    if (currentConfig.last_status) document.getElementById('selectStatus').value = currentConfig.last_status;
+    updateFilterLabels();
+
     // Ladder stats
     document.getElementById('ladderStreakVal').textContent = currentConfig.ladder_streak_current || 0;
     document.getElementById('ladderBestStreakVal').textContent = currentConfig.ladder_streak_best || 0;
@@ -230,9 +247,9 @@ function updateVolumeUI(vol) {
     }
     const icon = document.getElementById('volIcon');
     if (icon) {
-        if (vol <= 0.01) icon.textContent = '🔇';
-        else if (vol < 0.5) icon.textContent = '🔉';
-        else icon.textContent = '🔊';
+        if (vol <= 0.01) icon.innerHTML = SVG_VOL_MUTE;
+        else if (vol < 0.5) icon.innerHTML = SVG_VOL_LOW;
+        else icon.innerHTML = SVG_VOL_HIGH;
     }
 }
 
@@ -406,7 +423,7 @@ function initUIEvents() {
         if (!currentWinner) return;
         const btn = document.getElementById('btnPlayInLazer');
         const oldText = btn.innerHTML;
-        btn.innerHTML = '⏳ Запуск...';
+        btn.innerHTML = '<span>Запуск...</span>';
         btn.disabled = true;
 
         try {
@@ -420,10 +437,10 @@ function initUIEvents() {
                 })
             });
             const data = await res.json();
-            btn.innerHTML = '🚀 Запущено в osu!';
+            btn.innerHTML = '<span>Запущено в osu!</span>';
             setTimeout(() => { btn.innerHTML = oldText; btn.disabled = false; }, 2500);
         } catch (e) {
-            btn.innerHTML = '❌ Ошибка';
+            btn.innerHTML = '<span>Ошибка</span>';
             setTimeout(() => { btn.innerHTML = oldText; btn.disabled = false; }, 2500);
         }
     });
@@ -463,6 +480,7 @@ function initUIEvents() {
     // Reindex Local Button
     document.getElementById('btnReindexLocal').addEventListener('click', async () => {
         const btn = document.getElementById('btnReindexLocal');
+        const prevHtml = btn.innerHTML;
         btn.textContent = 'Индексация...';
         btn.disabled = true;
         try {
@@ -470,10 +488,11 @@ function initUIEvents() {
             const data = await res.json();
             checkLocalStatus();
             initProfile();
+            showToast(`База обновлена (${data.map_count || 0} карт)`);
         } catch (e) {
             console.error(e);
         } finally {
-            btn.textContent = '⟳ Обновить базу client.realm';
+            btn.innerHTML = prevHtml;
             btn.disabled = false;
         }
     });
@@ -562,25 +581,39 @@ async function saveConfig() {
     }
 }
 
-// Initial placeholder cards
-function populatePlaceholderReel() {
+// Load real beatmaps matching saved filters or leave clean empty dark strip
+async function loadInitialReelPreview() {
     const track = document.getElementById('rouletteTrack');
+    const hint = document.getElementById('drumEmptyHint');
+    if (!track) return;
     track.innerHTML = '';
-    
-    for (let i = 0; i < 25; i++) {
-        const card = document.createElement('div');
-        card.className = 'map-card';
-        card.innerHTML = `
-            <img class="card-bg-img" src="https://assets.ppy.sh/beatmaps/covers/cover.jpg" alt="Cover">
-            <div class="map-card-content">
-                <div class="map-sr-pill" style="background: #4290fb;">4.20★</div>
-                <div class="map-title">osu! Beatmap #${i + 1}</div>
-                <div class="map-artist">Artist Name</div>
-                <div class="map-version">Normal</div>
-            </div>
-        `;
-        track.appendChild(card);
-    }
+
+    try {
+        const res = await fetch('/api/reel/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                star_min: parseFloat(document.getElementById('inputSrMin')?.value || currentConfig.last_star_min || 3.5),
+                star_max: parseFloat(document.getElementById('inputSrMax')?.value || currentConfig.last_star_max || 4.8),
+                bpm_min: parseFloat(document.getElementById('inputBpmMin')?.value || currentConfig.last_bpm_min || 120),
+                bpm_max: parseFloat(document.getElementById('inputBpmMax')?.value || currentConfig.last_bpm_max || 260),
+                length_min: parseInt(document.getElementById('inputLengthMin')?.value || currentConfig.last_length_min || 30, 10),
+                length_max: parseInt(document.getElementById('inputLengthMax')?.value || currentConfig.last_length_max || 300, 10),
+                status: document.getElementById('selectStatus')?.value || currentConfig.last_status || 'ranked'
+            })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.cards && data.cards.length > 0) {
+                if (hint) hint.style.display = 'none';
+                buildReelDOM(data.cards);
+                return;
+            }
+        }
+    } catch (e) {}
+
+    // Clean empty dark strip
+    if (hint) hint.style.display = 'flex';
 }
 
 // Populate Mod Reel
@@ -613,7 +646,7 @@ async function startRouletteSpin() {
 
     const btnSpin = document.getElementById('btnSpin');
     btnSpin.disabled = true;
-    btnSpin.innerHTML = '<span>🌀 КАТИТСЯ...</span>';
+    btnSpin.innerHTML = '<span>ПОДБОР КАРТЫ...</span>';
 
     stopAudio();
     document.getElementById('winnerSection').style.display = 'none';
@@ -633,6 +666,18 @@ async function startRouletteSpin() {
         source_mode: currentConfig.source_mode || 'local'
     };
 
+    // Save last filters
+    Object.assign(currentConfig, {
+        last_star_min: payload.star_min,
+        last_star_max: payload.star_max,
+        last_bpm_min: payload.bpm_min,
+        last_bpm_max: payload.bpm_max,
+        last_length_min: payload.length_min,
+        last_length_max: payload.length_max,
+        last_status: payload.status
+    });
+    saveConfig();
+
     let rollData = null;
     try {
         const res = await fetch('/api/roll', {
@@ -642,18 +687,18 @@ async function startRouletteSpin() {
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({ detail: 'Ошибка сервера' }));
-            alert(err.detail || 'Не найдено карт по заданным фильтрам.');
+            showToast(err.detail || 'Не найдено карт по заданным фильтрам.');
             btnSpin.disabled = false;
-            btnSpin.innerHTML = '<span>🎰 КРУТИТЬ РУЛЕТКУ</span>';
+            btnSpin.innerHTML = `${SVG_SPIN_ICON}<span>КРУТИТЬ РУЛЕТКУ</span>`;
             isSpinning = false;
             return;
         }
         rollData = await res.json();
     } catch (e) {
         console.error('Roll error:', e);
-        alert('Не удалось связаться с сервером. Попробуйте еще раз.');
+        showToast('Не удалось связаться с сервером. Попробуйте еще раз.');
         btnSpin.disabled = false;
-        btnSpin.innerHTML = '<span>🎰 КРУТИТЬ РУЛЕТКУ</span>';
+        btnSpin.innerHTML = `${SVG_SPIN_ICON}<span>КРУТИТЬ РУЛЕТКУ</span>`;
         isSpinning = false;
         return;
     }
@@ -674,7 +719,7 @@ function startRouletteAnimationWithData(spinData) {
     const btnSpin = document.getElementById('btnSpin');
     if (btnSpin) {
         btnSpin.disabled = true;
-        btnSpin.innerHTML = '<span>⚡ СИНХРОНИЗАЦИЯ ЛОББИ...</span>';
+        btnSpin.innerHTML = '<span>СИНХРОНИЗАЦИЯ ЛОББИ...</span>';
     }
 
     currentWinner = spinData.winner;
@@ -695,6 +740,8 @@ function startRouletteAnimationWithData(spinData) {
 }
 
 function buildReelDOM(cards) {
+    const hint = document.getElementById('drumEmptyHint');
+    if (hint) hint.style.display = 'none';
     const track = document.getElementById('rouletteTrack');
     track.style.transition = 'none';
     track.style.transform = 'translateX(0px)';
@@ -750,7 +797,7 @@ function executeReelSpin(winnerIndex, winnerMod) {
         
         const btnSpin = document.getElementById('btnSpin');
         btnSpin.disabled = false;
-        btnSpin.innerHTML = '<span>🎰 КРУТИТЬ РУЛЕТКУ</span>';
+        btnSpin.innerHTML = `${SVG_SPIN_ICON}<span>КРУТИТЬ РУЛЕТКУ</span>`;
 
         window.soundController.playWinChime();
         displayWinnerResult(currentWinner, currentStats, winnerMod);
@@ -913,7 +960,7 @@ async function checkScore(isManual = false) {
 
     const badge = document.getElementById('scoreStatusBadge');
     if (badge && isManual) {
-        badge.textContent = '🔍 Сканирование client.realm...';
+        badge.textContent = 'Сканирование client.realm...';
     }
 
     // For automated polling, check scores created near or after roll_time (with 15s grace margin)
@@ -951,7 +998,7 @@ async function checkScore(isManual = false) {
                 ladderAutoAdvanced = true;
                 await executeLadderWin();
                 if (badge) {
-                    badge.textContent = `🎉 Победа в Лесенке! Следующий уровень разблокирован (+Next)`;
+                    badge.textContent = 'Победа в Лесенке! Следующий уровень разблокирован (+Next)';
                     badge.style.color = '#22c55e';
                     badge.style.background = 'rgba(34, 197, 94, 0.15)';
                 }
@@ -998,11 +1045,11 @@ function renderScoreView(data) {
 
     if (badge) {
         if (data.passed) {
-            badge.textContent = `✔️ Скор зафиксирован: ранг ${rank}`;
+            badge.textContent = `Скор зафиксирован: ранг ${rank}`;
             badge.style.color = '#22c55e';
             badge.style.background = 'rgba(34, 197, 94, 0.15)';
         } else {
-            badge.textContent = `❌ Провал (Fail / D / F)`;
+            badge.textContent = 'Провал (Fail / D / F)';
             badge.style.color = '#ef4444';
             badge.style.background = 'rgba(239, 68, 68, 0.15)';
         }
@@ -1038,7 +1085,7 @@ function setupPreviewAudio(previewUrl) {
     });
 
     currentAudio.addEventListener('ended', () => {
-        document.getElementById('btnPlayPause').innerHTML = '▶';
+        document.getElementById('btnPlayPause').innerHTML = SVG_PLAY_ICON;
         document.getElementById('seekSlider').value = 0;
         document.getElementById('playerCurrentTime').textContent = '0:00';
     });
@@ -1053,13 +1100,13 @@ function toggleAudio() {
     if (currentAudio.paused) {
         currentAudio.volume = window.soundController.volume;
         currentAudio.play().then(() => {
-            btn.innerHTML = '⏸';
+            btn.innerHTML = SVG_PAUSE_ICON;
         }).catch(() => {
-            btn.innerHTML = '▶';
+            btn.innerHTML = SVG_PLAY_ICON;
         });
     } else {
         currentAudio.pause();
-        btn.innerHTML = '▶';
+        btn.innerHTML = SVG_PLAY_ICON;
     }
 }
 
@@ -1070,7 +1117,7 @@ function stopAudio() {
         currentAudio = null;
     }
     const btn = document.getElementById('btnPlayPause');
-    if (btn) btn.innerHTML = '▶';
+    if (btn) btn.innerHTML = SVG_PLAY_ICON;
     const slider = document.getElementById('seekSlider');
     if (slider) slider.value = 0;
 }
@@ -1175,374 +1222,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ========================================================
-// V2.0 FEATURES: THEME, SIDEBAR, OVERLAY, LOBBY, OSDB, ANTI-TILT
-// ========================================================
-function showToast(message) {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-    const item = document.createElement('div');
-    item.className = 'toast-item';
-    item.textContent = message;
-    container.appendChild(item);
-    setTimeout(() => {
-        item.style.opacity = '0';
-        item.style.transition = 'opacity 0.25s ease';
-        setTimeout(() => item.remove(), 250);
-    }, 3200);
-}
-
-function applyThemeVisuals(cfg) {
-    const bgLayer = document.getElementById('appBgLayer');
-    const bgOverlay = document.getElementById('appBgOverlay');
-    if (!bgLayer || !bgOverlay) return;
-
-    const bgImg = cfg.bg_image || 'bg_1.png';
-    const dim = cfg.bg_dim !== undefined ? cfg.bg_dim : 0.72;
-    const blur = cfg.bg_blur !== undefined ? cfg.bg_blur : 12;
-    const style = cfg.ui_theme_style || 'glass';
-
-    if (bgImg === 'none') {
-        bgLayer.style.backgroundImage = 'none';
-        bgLayer.style.opacity = '0';
-    } else {
-        bgLayer.style.backgroundImage = `url('/static/backgrounds/${bgImg}')`;
-        bgLayer.style.opacity = '1';
-    }
-
-    bgLayer.style.filter = `blur(${blur}px)`;
-    bgOverlay.style.background = `rgba(9, 9, 11, ${dim})`;
-
-    document.body.classList.remove('theme-glass', 'theme-dark', 'theme-transparent');
-    document.body.classList.add(`theme-${style}`);
-
-    // Sync controls inside modal
-    document.querySelectorAll('.bg-thumb-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.bg === bgImg);
-    });
-    document.querySelectorAll('.style-pill-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.style === style);
-    });
-    const dimSlider = document.getElementById('sliderBgDim');
-    const dimVal = document.getElementById('bgDimVal');
-    if (dimSlider) dimSlider.value = dim;
-    if (dimVal) dimVal.textContent = `${Math.round(dim * 100)}%`;
-
-    const blurSlider = document.getElementById('sliderBgBlur');
-    const blurVal = document.getElementById('bgBlurVal');
-    if (blurSlider) blurSlider.value = blur;
-    if (blurVal) blurVal.textContent = `${blur}px`;
-
-    const hkSel = document.getElementById('selectOverlayHotkey');
-    if (hkSel && cfg.overlay_hotkey) hkSel.value = cfg.overlay_hotkey;
-
-    const irSel = document.getElementById('selectInstantRollHotkey');
-    if (irSel && cfg.instant_roll_hotkey) irSel.value = cfg.instant_roll_hotkey;
-
-    const alChk = document.getElementById('toggleOverlayAutoLaunch');
-    if (alChk) alChk.checked = Boolean(cfg.overlay_auto_launch);
-
-    const autoChk = document.getElementById('toggleOverlayAutostart');
-    if (autoChk) autoChk.checked = Boolean(cfg.overlay_autostart);
-}
-
-async function saveThemeConfigPatch(patch) {
-    Object.assign(currentConfig, patch);
-    applyThemeVisuals(currentConfig);
-    try {
-        await fetch('/api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(currentConfig)
-        });
-    } catch (e) {}
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Load & apply initial theme/sidebar config
-    try {
-        const res = await fetch('/api/config');
-        if (res.ok) {
-            const cfg = await res.json();
-            Object.assign(currentConfig, cfg);
-            applyThemeVisuals(currentConfig);
-
-            const sidebar = document.getElementById('mainSidebar');
-            const toggleIcon = document.getElementById('sidebarToggleIcon');
-            if (cfg.sidebar_collapsed && sidebar) {
-                sidebar.classList.add('collapsed');
-                if (toggleIcon) toggleIcon.textContent = '⟩';
-            }
-        }
-    } catch (e) {}
-
-    // 2. Sidebar Collapse Toggle
-    const btnToggleSidebar = document.getElementById('btnToggleSidebar');
-    if (btnToggleSidebar) {
-        btnToggleSidebar.addEventListener('click', () => {
-            const sidebar = document.getElementById('mainSidebar');
-            const toggleIcon = document.getElementById('sidebarToggleIcon');
-            if (!sidebar) return;
-            const collapsed = sidebar.classList.toggle('collapsed');
-            if (toggleIcon) toggleIcon.textContent = collapsed ? '⟩' : '⟨';
-            saveThemeConfigPatch({ sidebar_collapsed: collapsed });
-        });
-    }
-
-    // 3. Theme Modal Bindings
-    const themeModal = document.getElementById('themeModal');
-    document.getElementById('btnOpenTheme')?.addEventListener('click', () => {
-        if (themeModal) themeModal.style.display = 'flex';
-    });
-    document.getElementById('btnCloseTheme')?.addEventListener('click', () => {
-        if (themeModal) themeModal.style.display = 'none';
-    });
-    themeModal?.addEventListener('click', (e) => {
-        if (e.target === themeModal) themeModal.style.display = 'none';
-    });
-
-    document.querySelectorAll('.bg-thumb-btn').forEach(btn => {
-        btn.addEventListener('click', () => saveThemeConfigPatch({ bg_image: btn.dataset.bg }));
-    });
-    document.querySelectorAll('.style-pill-btn').forEach(btn => {
-        btn.addEventListener('click', () => saveThemeConfigPatch({ ui_theme_style: btn.dataset.style }));
-    });
-    document.getElementById('sliderBgDim')?.addEventListener('input', (e) => {
-        saveThemeConfigPatch({ bg_dim: parseFloat(e.target.value) });
-    });
-    document.getElementById('sliderBgBlur')?.addEventListener('input', (e) => {
-        saveThemeConfigPatch({ bg_blur: parseInt(e.target.value, 10) });
-    });
-    document.getElementById('selectOverlayHotkey')?.addEventListener('change', (e) => {
-        saveThemeConfigPatch({ overlay_hotkey: e.target.value });
-        showToast(`Хоткей оверлея: ${e.target.value}`);
-    });
-    document.getElementById('selectInstantRollHotkey')?.addEventListener('change', (e) => {
-        saveThemeConfigPatch({ instant_roll_hotkey: e.target.value });
-        showToast(`Хоткей быстрой крутки: ${e.target.value}`);
-    });
-    document.getElementById('toggleOverlayAutoLaunch')?.addEventListener('change', (e) => {
-        saveThemeConfigPatch({ overlay_auto_launch: e.target.checked });
-    });
-    document.getElementById('toggleOverlayAutostart')?.addEventListener('change', (e) => {
-        saveThemeConfigPatch({ overlay_autostart: e.target.checked });
-    });
-
-    // 4. Steam-like Overlay Button
-    const btnOverlay = document.getElementById('btnToggleOverlay');
-    let overlayActive = false;
-    async function refreshOverlayBtn() {
-        try {
-            const res = await fetch('/api/overlay/state');
-            if (res.ok) {
-                const st = await res.json();
-                overlayActive = Boolean(st.is_open);
-                if (btnOverlay) {
-                    btnOverlay.classList.toggle('active-overlay', overlayActive);
-                    btnOverlay.textContent = overlayActive ? '🎮 Оверлей (Вкл)' : '🎮 Оверлей';
-                }
-            }
-        } catch (e) {}
-    }
-    btnOverlay?.addEventListener('click', async () => {
-        if (overlayActive) {
-            await fetch('/api/overlay/close', { method: 'POST' });
-            showToast('Игровой оверлей закрыт');
-        } else {
-            await fetch('/api/overlay/open?expanded=true', { method: 'POST' });
-            showToast(`Оверлей запущен! Нажмите ${currentConfig.overlay_hotkey || 'F9'} чтобы свернуть в Click-Through`);
-        }
-        refreshOverlayBtn();
-    });
-    setInterval(refreshOverlayBtn, 2500);
-
-    // 5. Collections Export (.osdb)
-    document.getElementById('btnExportOsdb')?.addEventListener('click', async () => {
-        try {
-            const res = await fetch('/api/collections/export', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: '' })
-            });
-            if (!res.ok) {
-                const err = await res.json();
-                showToast(err.detail || 'Не удалось экспортировать коллекцию');
-                return;
-            }
-            const data = await res.json();
-            showToast(`Сохранено ${data.count} карт в .osdb! Открываю папку...`);
-            await fetch('/api/collections/open_folder', { method: 'POST' });
-        } catch (e) {
-            showToast('Ошибка экспорта коллекции');
-        }
-    });
-
-    // 6. Multiplayer Sync Lobby
-    let lastSyncedSpinId = null;
-    let myLobbyClientId = null;
-
-    document.getElementById('btnCreateLobby')?.addEventListener('click', async () => {
-        showToast('Создание комнаты...');
-        const res = await fetch('/api/lobby/create', { method: 'POST' });
-        const data = await res.json();
-        if (!data.ok) {
-            showToast(`Ошибка: ${data.error || 'нет связи с брокером'}`);
-            return;
-        }
-        showToast(`Комната ${data.room_code} создана!`);
-        pollLobbyState();
-    });
-
-    document.getElementById('btnJoinLobby')?.addEventListener('click', async () => {
-        const code = document.getElementById('inputLobbyCode')?.value.trim();
-        if (!code) { showToast('Введите код комнаты'); return; }
-        showToast(`Подключение к ${code}...`);
-        const res = await fetch('/api/lobby/join', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
-        });
-        const data = await res.json();
-        if (!data.ok) {
-            showToast(`Ошибка входа: ${data.error || 'комната недоступна'}`);
-            return;
-        }
-        showToast(`Вы вошли в комнату ${data.room_code}!`);
-        pollLobbyState();
-    });
-
-    document.getElementById('btnLeaveLobby')?.addEventListener('click', async () => {
-        await fetch('/api/lobby/leave', { method: 'POST' });
-        showToast('Вы вышли из лобби');
-        pollLobbyState();
-    });
-
-    document.getElementById('roomCodeBadge')?.addEventListener('click', async () => {
-        const code = document.getElementById('roomCodeText')?.textContent;
-        if (code && navigator.clipboard) {
-            await navigator.clipboard.writeText(code);
-            showToast(`Код ${code} скопирован в буфер обмена!`);
-        }
-    });
-
-    async function pollLobbyState() {
-        try {
-            const res = await fetch('/api/lobby/state');
-            if (!res.ok) return;
-            const st = await res.json();
-            myLobbyClientId = st.client_id;
-
-            const discCtrl = document.getElementById('lobbyControlsDisconnected');
-            const connCtrl = document.getElementById('lobbyControlsConnected');
-            const body = document.getElementById('lobbyBody');
-            const pill = document.getElementById('lobbyStatusPill');
-
-            if (st.in_room) {
-                if (discCtrl) discCtrl.style.display = 'none';
-                if (connCtrl) connCtrl.style.display = 'flex';
-                if (body) body.style.display = 'flex';
-                document.getElementById('roomCodeText').textContent = st.room_code;
-                if (pill) {
-                    pill.textContent = st.connected ? `В сети • ${st.members.length} игр.` : 'Переподключение...';
-                    pill.classList.toggle('connected', st.connected);
-                }
-
-                // Render members
-                const mList = document.getElementById('lobbyMembersList');
-                if (mList) {
-                    mList.innerHTML = '';
-                    st.members.forEach(m => {
-                        const chip = document.createElement('div');
-                        chip.className = 'lobby-member-chip';
-                        chip.innerHTML = `
-                            <img src="${m.avatar || 'https://assets.ppy.sh/favicon/favicon-32x32.png'}" alt="">
-                            <span>${m.name}${m.is_host ? ' 👑' : ''}</span>
-                        `;
-                        mList.appendChild(chip);
-                    });
-                }
-
-                // Render round scores leaderboard
-                const lbList = document.getElementById('lobbyLeaderboardList');
-                if (lbList) {
-                    if (st.round_scores && st.round_scores.length > 0) {
-                        lbList.innerHTML = '';
-                        st.round_scores.forEach((s, idx) => {
-                            const row = document.createElement('div');
-                            row.className = 'lobby-lb-row';
-                            row.innerHTML = `
-                                <div style="display:flex;align-items:center;gap:10px;">
-                                    <strong style="color:#fbbf24;">#${idx + 1}</strong>
-                                    <span style="font-weight:700;">${s.name}</span>
-                                </div>
-                                <div style="display:flex;align-items:center;gap:12px;">
-                                    <span style="font-weight:800;color:#4ade80;">${s.rank}</span>
-                                    <span>${s.accuracy.toFixed(2)}%</span>
-                                    <span style="color:#f87171;">${s.misses}x</span>
-                                    <strong style="color:#ff6699;">${Math.round(s.pp)} PP</strong>
-                                </div>
-                            `;
-                            lbList.appendChild(row);
-                        });
-                    } else {
-                        lbList.innerHTML = '<div class="lobby-empty">Сыграйте выпавшую карту в osu!(lazer), чтобы результаты появились здесь автоматически.</div>';
-                    }
-                }
-
-                // Sync remote spin from another player/host
-                if (st.latest_spin && st.latest_spin.spin_id && st.latest_spin.spin_id !== lastSyncedSpinId) {
-                    lastSyncedSpinId = st.latest_spin.spin_id;
-                    if (st.latest_spin.sender_id !== myLobbyClientId && typeof startRouletteAnimationWithData === 'function') {
-                        showToast(`🎲 ${st.latest_spin.host_name || 'Хост'} запустил прокрутку!`);
-                        startRouletteAnimationWithData(st.latest_spin);
-                    }
-                }
-            } else {
-                if (discCtrl) discCtrl.style.display = 'flex';
-                if (connCtrl) connCtrl.style.display = 'none';
-                if (body) body.style.display = 'none';
-                if (pill) {
-                    pill.textContent = 'Не в комнате';
-                    pill.classList.remove('connected');
-                }
-            }
-        } catch (e) {}
-    }
-    setInterval(pollLobbyState, 1600);
-
-    // 7. Anti-Tilt Detector
-    let tiltDismissed = false;
-    async function pollTiltDetector() {
-        if (!currentWinner || tiltDismissed) return;
-        try {
-            const res = await fetch('/api/tilt/status');
-            if (!res.ok) return;
-            const data = await res.json();
-            const banner = document.getElementById('tiltAlertBanner');
-            if (banner) {
-                banner.style.display = data.tilting ? 'flex' : 'none';
-            }
-        } catch (e) {}
-    }
-    setInterval(pollTiltDetector, 8000);
-
-    document.getElementById('btnDismissTilt')?.addEventListener('click', () => {
-        tiltDismissed = true;
-        const banner = document.getElementById('tiltAlertBanner');
-        if (banner) banner.style.display = 'none';
-    });
-
-    document.getElementById('btnAntiTiltSpin')?.addEventListener('click', () => {
-        const srMinEl = document.getElementById('inputSrMin');
-        const srMaxEl = document.getElementById('inputSrMax');
-        if (srMinEl && srMaxEl) {
-            srMinEl.value = Math.max(0.5, (parseFloat(srMinEl.value) || 3.5) - 0.3).toFixed(1);
-            srMaxEl.value = Math.max(1.0, (parseFloat(srMaxEl.value) || 4.8) - 0.3).toFixed(1);
-            srMinEl.dispatchEvent(new Event('input', { bubbles: true }));
-            srMaxEl.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        const banner = document.getElementById('tiltAlertBanner');
-        if (banner) banner.style.display = 'none';
-        tiltDismissed = false;
-        document.getElementById('btnSpin')?.click();
-    });
-});

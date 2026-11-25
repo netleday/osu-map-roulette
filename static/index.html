@@ -12,7 +12,7 @@
     <div id="appBgLayer" class="app-bg-layer"></div>
     <div id="appBgOverlay" class="app-bg-overlay"></div>
 
-    <!-- LEFT SIDEBAR: ALL SETTINGS -->
+    <!-- LEFT SIDEBAR: FILTERS & SETTINGS BUTTON -->
     <aside id="mainSidebar" class="sidebar">
         <!-- Logo / Title -->
         <div class="sidebar-header">
@@ -28,11 +28,13 @@
             <div class="section-label">ИСТОЧНИК КАРТ</div>
             <div class="source-toggle">
                 <button id="btnSourceLocal" class="source-tab active" data-source="local">
-                    <span>📁 Локально</span>
-                    <span id="localMapCountBadge" class="badge">1354</span>
+                    <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    <span>Локально</span>
+                    <span id="localMapCountBadge" class="badge">0</span>
                 </button>
                 <button id="btnSourceApi" class="source-tab" data-source="api">
-                    <span>🌐 Онлайн</span>
+                    <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    <span>Онлайн</span>
                 </button>
             </div>
             <div id="sourceDesc" class="source-desc">База client.realm (%appdata%\osu)</div>
@@ -99,11 +101,11 @@
             <div class="section-label">ТИП ПАТТЕРНОВ</div>
             <select id="selectPatternType" class="select-field">
                 <option value="any" selected>Любой (Any)</option>
-                <option value="aim">🎯 Jump Aim (Aimslop)</option>
-                <option value="flow_aim">🌊 Flow Aim (Спейсед)</option>
-                <option value="stream">⚡ Streams / Speed (Стримы)</option>
-                <option value="tech">🎛️ Finger Control / Tech</option>
-                <option value="balanced">⚖️ Balanced (Баланс)</option>
+                <option value="aim">Jump Aim (Aimslop)</option>
+                <option value="flow_aim">Flow Aim (Спейсед)</option>
+                <option value="stream">Streams / Speed (Стримы)</option>
+                <option value="tech">Finger Control / Tech</option>
+                <option value="balanced">Balanced (Баланс)</option>
             </select>
         </div>
 
@@ -152,24 +154,29 @@
             </div>
         </div>
 
-        <!-- Database status & Reindex -->
+        <!-- Sidebar Bottom: Settings Button & Author -->
         <div class="sidebar-bottom">
-            <button id="btnReindexLocal" class="btn-sidebar">
-                ⟳ Обновить базу client.realm
+            <button id="btnOpenSettings" class="btn-sidebar btn-sidebar-settings">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Настройки</span>
             </button>
             <div id="localStatusText" class="db-status-text">
-                client.realm: 1354 карты загружено
+                client.realm: загрузка...
             </div>
+            <a href="https://github.com/netleday/osu-map-roulette" target="_blank" class="sidebar-author-link" title="Открыть репозиторий на GitHub">
+                <svg class="ui-icon" style="width:12px;height:12px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"></path></svg>
+                <span>v1.1.0 • by netleday</span>
+            </a>
         </div>
     </aside>
 
     <!-- RIGHT CONTENT AREA -->
     <main class="content-area">
-        <!-- TOP TOOLBAR: Sidebar Toggle, Overlay, Theme, Profile & Volume -->
+        <!-- TOP TOOLBAR: Sidebar Toggle, Overlay (Disabled), Profile & Volume -->
         <header class="top-bar">
             <div class="top-left-group">
                 <button id="btnToggleSidebar" class="btn-top-icon" title="Свернуть/развернуть левую панель">
-                    <span id="sidebarToggleIcon">⟨</span>
+                    <svg id="sidebarToggleSvg" class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
                 <div class="shortcuts-hint">
                     <span class="key-pill">Space</span> Крутить
@@ -180,14 +187,14 @@
                 </div>
             </div>
 
-            <!-- Top Right Group: Overlay, Theme, Profile & Volume -->
+            <!-- Top Right Group: Overlay Stub, Profile & Volume -->
             <div class="top-right-group">
-                <button id="btnToggleOverlay" class="btn-top-action" title="Запустить Steam-like оверлей поверх osu!(lazer)">
-                    🎮 Оверлей
+                <button id="btnToggleOverlay" class="btn-top-action btn-disabled-stub" disabled title="Внутриигровой оверлей находится в разработке">
+                    <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    <span>Оверлей</span>
+                    <span class="dev-badge">В разработке</span>
                 </button>
-                <button id="btnOpenTheme" class="btn-top-action" title="Фон с аниме девочками, стекло и блюр">
-                    🎨 Оформление
-                </button>
+
                 <!-- Player Profile Widget -->
                 <button id="btnOpenProfile" class="profile-widget" title="Открыть профиль игрока">
                     <img id="topProfileAvatar" src="https://assets.ppy.sh/favicon/favicon-32x32.png" alt="Avatar" class="profile-avatar-mini">
@@ -199,20 +206,48 @@
 
                 <!-- Volume Control -->
                 <div class="volume-widget" title="Регулировка громкости">
-                    <span id="volIcon" class="vol-icon">🔊</span>
+                    <span id="volIcon" class="vol-icon">
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    </span>
                     <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.7">
                     <span id="volLabel" class="vol-label">70%</span>
                 </div>
             </div>
         </header>
 
+        <!-- VOLUNTARY UPDATE BANNER -->
+        <div id="updateBanner" class="update-banner" style="display: none;">
+            <div class="update-banner-row">
+                <div class="update-banner-left">
+                    <svg class="ui-icon" style="color: var(--accent-primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span id="updateBannerTitle" class="update-banner-title">Доступно обновление v1.2.0</span>
+                </div>
+                <div class="update-banner-actions">
+                    <button id="btnBannerChangelog" class="btn-update-secondary">Что нового</button>
+                    <button id="btnBannerInstall" class="btn-small-accent">Обновить</button>
+                    <button id="btnBannerDismiss" class="btn-tilt-dismiss" title="Скрыть до следующего запуска">
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="updateProgressWrap" class="update-progress-wrap" style="display: none;">
+                <div class="update-progress-track">
+                    <div id="updateProgressFill" class="update-progress-fill"></div>
+                </div>
+                <span id="updateProgressText" class="update-progress-text">0%</span>
+            </div>
+        </div>
+
         <!-- ROULETTE SECTION -->
         <section class="roulette-section">
             <!-- Beatmap Drum 1 -->
             <div class="drum-container">
                 <div class="drum-marker"></div>
+                <div id="drumEmptyHint" class="drum-empty-hint" style="display: none;">
+                    Нажмите «Крутить рулетку», чтобы запустить подбор карт
+                </div>
                 <div id="rouletteTrack" class="drum-track">
-                    <!-- Cards will be populated dynamically -->
+                    <!-- Populated from real beatmaps or clean empty strip -->
                 </div>
             </div>
 
@@ -227,7 +262,8 @@
             <!-- Big Spin Button -->
             <div class="spin-bar">
                 <button id="btnSpin" class="btn-spin">
-                    <span>🎰 КРУТИТЬ РУЛЕТКУ</span>
+                    <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    <span>КРУТИТЬ РУЛЕТКУ</span>
                 </button>
             </div>
         </section>
@@ -235,7 +271,9 @@
         <!-- ANTI-TILT BANNER -->
         <div id="tiltAlertBanner" class="tilt-alert-banner" style="display: none;">
             <div class="tilt-alert-left">
-                <span class="tilt-icon">🔥</span>
+                <span class="tilt-icon">
+                    <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </span>
                 <div>
                     <div class="tilt-title">Детектор тильта</div>
                     <div class="tilt-sub">Похоже на сложный паттерн — скинуть сложность на -0.3★ для разминки?</div>
@@ -243,7 +281,9 @@
             </div>
             <div class="tilt-actions">
                 <button id="btnAntiTiltSpin" class="btn-tilt-action">Скинуть -0.3★ и крутить</button>
-                <button id="btnDismissTilt" class="btn-tilt-dismiss">✕</button>
+                <button id="btnDismissTilt" class="btn-tilt-dismiss" title="Скрыть">
+                    <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
             </div>
         </div>
 
@@ -310,7 +350,8 @@
                                 <span id="scoreStatusBadge" class="score-poll-badge">Ожидание игры...</span>
                             </div>
                             <button id="btnCheckScore" class="btn-check-score">
-                                🔍 Проверить скор
+                                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <span>Проверить скор</span>
                             </button>
                         </div>
                         <div id="scoreView" class="score-view" style="display: none;">
@@ -328,7 +369,9 @@
                 <!-- Preview Audio Player & Action Buttons -->
                 <div class="actions-panel">
                     <div class="preview-player">
-                        <button id="btnPlayPause" class="btn-play">▶</button>
+                        <button id="btnPlayPause" class="btn-play" title="Прослушать превью">
+                            <svg class="ui-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        </button>
                         <div class="player-track">
                             <input type="range" id="seekSlider" min="0" max="100" value="0">
                             <div class="player-time">
@@ -341,13 +384,16 @@
 
                     <div class="buttons-row">
                         <button id="btnPlayInLazer" class="btn-play-lazer">
-                            🚀 Играть в osu!(lazer)
+                            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            <span>Играть в osu!(lazer)</span>
                         </button>
                         <button id="btnLadderNext" class="btn-win" style="display: none;">
-                            ✔️ Пройдено (+Next)
+                            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Пройдено (+Next)</span>
                         </button>
                         <button id="btnLadderFail" class="btn-fail" style="display: none;">
-                            ✖ Слился
+                            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            <span>Слился</span>
                         </button>
                         <a id="btnOsuWeb" href="#" target="_blank" class="btn-secondary">
                             osu.ppy.sh
@@ -366,14 +412,17 @@
                     <span id="lobbyStatusPill" class="lobby-status-pill">Не в комнате</span>
                 </div>
                 <div id="lobbyControlsDisconnected" class="lobby-controls">
-                    <button id="btnCreateLobby" class="btn-lobby-primary">➕ Создать комнату</button>
+                    <button id="btnCreateLobby" class="btn-lobby-primary">
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>Создать комнату</span>
+                    </button>
                     <input id="inputLobbyCode" type="text" class="lobby-code-input" placeholder="OSU-1234" maxlength="12">
                     <button id="btnJoinLobby" class="btn-lobby-secondary">Войти по коду</button>
                 </div>
                 <div id="lobbyControlsConnected" class="lobby-controls" style="display: none;">
                     <div class="room-code-box" id="roomCodeBadge" title="Нажмите, чтобы скопировать код">
                         <span id="roomCodeText">OSU-0000</span>
-                        <span class="copy-hint">📋</span>
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                     </div>
                     <button id="btnLeaveLobby" class="btn-lobby-danger">Выйти</button>
                 </div>
@@ -396,9 +445,10 @@
         <section class="history-block">
             <div class="history-head">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <span>ИСТОРИЯ ВЫПАВШИХ КАРТ (СОХРАНЯЕТСЯ)</span>
+                    <span>ИСТОРИЯ ВЫПАВШИХ КАРТ</span>
                     <button id="btnExportOsdb" class="btn-export-osdb" title="Экспортировать дропы сессии в коллекцию osu! (.osdb)">
-                        💾 Сохранить в коллекцию (.osdb)
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        <span>Сохранить в коллекцию (.osdb)</span>
                     </button>
                 </div>
                 <span id="historyCountText">0 карт</span>
@@ -412,7 +462,9 @@
         <div class="modal-card">
             <div class="modal-header">
                 <div class="modal-title">ПРОФИЛЬ ИГРОКА OSU! (LAZER)</div>
-                <button id="btnCloseProfile" class="btn-modal-close">✕</button>
+                <button id="btnCloseProfile" class="btn-modal-close">
+                    <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="profile-hero">
@@ -476,23 +528,23 @@
                 <div class="modal-section-title">РАСПРЕДЕЛЕНИЕ ПО ПЛЕЙСТАЙЛАМ</div>
                 <div class="playstyles-breakdown">
                     <div class="pst-row">
-                        <span>🎯 Jump Aim (Aimslop)</span>
+                        <span>Jump Aim (Aimslop)</span>
                         <span id="pstCountAim" class="pst-val">0</span>
                     </div>
                     <div class="pst-row">
-                        <span>🌊 Flow Aim (Спейсед)</span>
+                        <span>Flow Aim (Спейсед)</span>
                         <span id="pstCountFlow" class="pst-val">0</span>
                     </div>
                     <div class="pst-row">
-                        <span>⚡ Streams / Speed (Стримы)</span>
+                        <span>Streams / Speed (Стримы)</span>
                         <span id="pstCountStream" class="pst-val">0</span>
                     </div>
                     <div class="pst-row">
-                        <span>🎛️ Finger Control / Tech</span>
+                        <span>Finger Control / Tech</span>
                         <span id="pstCountTech" class="pst-val">0</span>
                     </div>
                     <div class="pst-row">
-                        <span>⚖️ Balanced (Баланс)</span>
+                        <span>Balanced (Баланс)</span>
                         <span id="pstCountBalanced" class="pst-val">0</span>
                     </div>
                 </div>
@@ -500,47 +552,72 @@
         </div>
     </div>
 
-    <!-- THEME, BACKGROUND & OVERLAY SETTINGS MODAL -->
-    <div id="themeModal" class="modal-overlay" style="display: none;">
-        <div class="modal-card theme-modal-card">
+    <!-- UNIFIED SETTINGS MODAL (THEMES, BACKGROUNDS, OSU PATHS, OVERLAY STUB) -->
+    <div id="settingsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card settings-modal-card">
             <div class="modal-header">
-                <div class="modal-title">🎨 ОФОРМЛЕНИЕ, ФОН И ОВЕРЛЕЙ</div>
-                <button id="btnCloseTheme" class="btn-modal-close">✕</button>
+                <div class="modal-title">НАСТРОЙКИ ПРИЛОЖЕНИЯ</div>
+                <button id="btnCloseSettings" class="btn-modal-close">
+                    <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
             </div>
-            <div class="modal-body">
-                <div class="modal-section-title">АНИМЕ-ДЕВОЧКА НА ЗАДНИЙ ФОН</div>
-                <div id="bgPickerGrid" class="bg-picker-grid">
-                    <button type="button" class="bg-thumb-btn" data-bg="none">
-                        <div class="bg-thumb-none">🖤</div>
-                        <span>Без фона</span>
+            <div class="modal-body settings-modal-body">
+
+                <!-- Section 1: Theme Presets & Custom Theme Builder -->
+                <div class="modal-section-title">ТЕМЫ И ОФОРМЛЕНИЕ</div>
+                <div class="theme-presets-grid" id="themePresetsGrid">
+                    <button type="button" class="theme-preset-card active" data-preset="installer_pink">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #ff4081, #c026d3);"></span>
+                        <span>Installer Pink</span>
                     </button>
-                    <button type="button" class="bg-thumb-btn active" data-bg="bg_1.png">
-                        <img src="/static/backgrounds/bg_1.png" alt="Art 1">
-                        <span>Маскот</span>
+                    <button type="button" class="theme-preset-card" data-preset="lazer_neon">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #ff66aa, #38bdf8);"></span>
+                        <span>osu! Lazer</span>
                     </button>
-                    <button type="button" class="bg-thumb-btn" data-bg="bg_2.jpg">
-                        <img src="/static/backgrounds/bg_2.jpg" alt="Art 2">
-                        <span>Неко #1</span>
+                    <button type="button" class="theme-preset-card" data-preset="deep_ocean">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);"></span>
+                        <span>Deep Ocean</span>
                     </button>
-                    <button type="button" class="bg-thumb-btn" data-bg="bg_3.jpg">
-                        <img src="/static/backgrounds/bg_3.jpg" alt="Art 3">
-                        <span>Неко #2</span>
+                    <button type="button" class="theme-preset-card" data-preset="emerald_mint">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #10b981, #059669);"></span>
+                        <span>Emerald</span>
                     </button>
-                    <button type="button" class="bg-thumb-btn" data-bg="bg_4.jpg">
-                        <img src="/static/backgrounds/bg_4.jpg" alt="Art 4">
-                        <span>Неко #3</span>
-                    </button>
-                    <button type="button" class="bg-thumb-btn" data-bg="bg_5.jpg">
-                        <img src="/static/backgrounds/bg_5.jpg" alt="Art 5">
-                        <span>Неко #4</span>
+                    <button type="button" class="theme-preset-card" data-preset="graphite_minimal">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #e4e4e7, #52525b);"></span>
+                        <span>Graphite</span>
                     </button>
                 </div>
 
-                <div class="modal-section-title" style="margin-top: 16px;">СТИЛЬ ИНТЕРФЕЙСА</div>
-                <div class="theme-style-row">
-                    <button type="button" class="style-pill-btn active" data-style="glass">✨ Стекло (Glass)</button>
-                    <button type="button" class="style-pill-btn" data-style="dark">🖤 Глубокий чёрный</button>
-                    <button type="button" class="style-pill-btn" data-style="transparent">🫧 Прозрачный</button>
+                <!-- Custom Theme Builder -->
+                <div class="custom-theme-box">
+                    <div class="custom-theme-header">
+                        <span>Конструктор своей темы</span>
+                        <button type="button" id="btnApplyCustomTheme" class="btn-small-accent">Применить свою тему</button>
+                    </div>
+                    <div class="custom-colors-row">
+                        <label class="color-picker-item">
+                            <span>Основной цвет</span>
+                            <input type="color" id="customColorPrimary" value="#ff4081">
+                        </label>
+                        <label class="color-picker-item">
+                            <span>Вторичный цвет</span>
+                            <input type="color" id="customColorSecondary" value="#c026d3">
+                        </label>
+                        <div class="theme-slider-item" style="flex: 1;">
+                            <div class="section-label-row">
+                                <span>ПРОЗРАЧНОСТЬ ПАНЕЛЕЙ</span>
+                                <span id="panelOpacityVal" class="val-pill">74%</span>
+                            </div>
+                            <input type="range" id="sliderPanelOpacity" min="0.30" max="0.98" step="0.02" value="0.74">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Glass style & Dim/Blur -->
+                <div class="theme-style-row" style="margin-top: 10px;">
+                    <button type="button" class="style-pill-btn active" data-style="glass">Стекло (Glass)</button>
+                    <button type="button" class="style-pill-btn" data-style="dark">Глубокий чёрный</button>
+                    <button type="button" class="style-pill-btn" data-style="transparent">Прозрачный</button>
                 </div>
 
                 <div class="theme-sliders-grid">
@@ -560,41 +637,107 @@
                     </div>
                 </div>
 
-                <div class="modal-section-title" style="margin-top: 16px;">ИГРОВОЙ ОВЕРЛЕЙ (STEAM-LIKE)</div>
-                <div class="overlay-settings-box">
-                    <div class="overlay-setting-row">
-                        <span>Горячая клавиша переключения HUD</span>
-                        <select id="selectOverlayHotkey" class="select-field" style="width: 150px;">
-                            <option value="F9">F9</option>
-                            <option value="Shift+Tab">Shift + Tab</option>
-                            <option value="F8">F8</option>
-                            <option value="F10">F10</option>
-                        </select>
-                    </div>
-                    <div class="overlay-setting-row" style="margin-top: 8px;">
-                        <span>Быстрая крутка в оверлее (Instant Roll)</span>
-                        <select id="selectInstantRollHotkey" class="select-field" style="width: 150px;">
-                            <option value="Alt+R">Alt + R</option>
-                            <option value="F8">F8</option>
-                            <option value="Ctrl+Shift+R">Ctrl + Shift + R</option>
-                            <option value="F10">F10</option>
-                        </select>
-                    </div>
-                    <label class="toggle-row" style="margin-top: 8px;">
-                        <span>Автозапуск в игре через 1.5с после прокрутки</span>
-                        <div class="switch-wrap">
-                            <input type="checkbox" id="toggleOverlayAutoLaunch">
-                            <span class="slider"></span>
-                        </div>
-                    </label>
-                    <label class="toggle-row" style="margin-top: 8px;">
-                        <span>Автозапуск оверлея при обнаружении osu!.exe</span>
-                        <div class="switch-wrap">
-                            <input type="checkbox" id="toggleOverlayAutostart">
-                            <span class="slider"></span>
-                        </div>
-                    </label>
+                <!-- Section 2: Backgrounds & Custom Upload -->
+                <div class="modal-section-title" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>ЗАДНИЙ ФОН (ВСТРОЕННЫЕ И СВОИ ОБОИ)</span>
+                    <button type="button" id="btnUploadBg" class="btn-upload-bg">
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <span>Загрузить свою картинку</span>
+                    </button>
+                    <input type="file" id="inputUploadBg" accept=".png,.jpg,.jpeg,.webp" style="display: none;">
                 </div>
+                <div id="bgPickerGrid" class="bg-picker-grid">
+                    <!-- Populated dynamically via /api/backgrounds/list -->
+                </div>
+
+                <!-- Section 3: osu! Paths, Database & API -->
+                <div class="modal-section-title" style="margin-top: 16px;">БАЗА OSU!(LAZER) И ЗЕРКАЛА</div>
+                <div class="settings-form-box">
+                    <div class="settings-field-row">
+                        <label>Папка osu!(lazer)</label>
+                        <input type="text" id="inputLazerPath" class="settings-text-input" placeholder="%APPDATA%\osu">
+                    </div>
+                    <div class="settings-field-row">
+                        <label>Зеркало загрузки .osz</label>
+                        <select id="selectMirror" class="select-field" style="width: 190px;">
+                            <option value="beatconnect">BeatConnect</option>
+                            <option value="nerinyan">Nerinyan</option>
+                            <option value="catboy">Catboy (Mino)</option>
+                        </select>
+                    </div>
+                    <div class="settings-field-row">
+                        <label>osu! API v2 (опционально)</label>
+                        <div style="display: flex; gap: 6px; flex: 1; justify-content: flex-end;">
+                            <input type="text" id="inputClientId" class="settings-text-input" style="max-width: 130px;" placeholder="Client ID">
+                            <input type="password" id="inputClientSecret" class="settings-text-input" style="max-width: 160px;" placeholder="Client Secret">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                        <button id="btnReindexLocal" class="btn-sidebar" style="flex: 1;">
+                            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                            <span>Переиндексировать client.realm</span>
+                        </button>
+                        <button id="btnSaveTechSettings" class="btn-small-accent">Сохранить пути</button>
+                    </div>
+                </div>
+
+                <!-- Section 4: Overlay Stub -->
+                <div class="modal-section-title" style="margin-top: 16px; display: flex; align-items: center; gap: 8px;">
+                    <span>ВНУТРИИГРОВОЙ ОВЕРЛЕЙ</span>
+                    <span class="dev-badge">В разработке</span>
+                </div>
+                <div class="overlay-settings-box overlay-stub-disabled">
+                    <div class="overlay-setting-row">
+                        <span>Запуск и настройка оверлея поверх osu!(lazer)</span>
+                        <button type="button" class="btn-top-action" disabled>Недоступно</button>
+                    </div>
+                </div>
+
+                <!-- Section 5: About & Updates -->
+                <div class="modal-section-title" style="margin-top: 16px;">О ПРОГРАММЕ И ОБНОВЛЕНИЯ</div>
+                <div class="about-card">
+                    <div class="about-top-row">
+                        <div class="about-info">
+                            <div class="about-app-name">osu! Map Roulette <span id="aboutVersionBadge" class="about-ver-pill">v1.1.0</span></div>
+                            <div class="about-author-row">
+                                <span>Разработчик:</span>
+                                <a href="https://github.com/netleday" target="_blank" class="about-link">netleday</a>
+                                <span>•</span>
+                                <a href="https://github.com/netleday/osu-map-roulette" target="_blank" class="about-link">GitHub</a>
+                            </div>
+                        </div>
+                        <div id="aboutUpdateStatus" class="about-status-text">Актуальная версия</div>
+                    </div>
+                    <div class="about-actions-row">
+                        <button type="button" id="btnCheckUpdates" class="btn-update-secondary">
+                            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                            <span>Проверить обновления</span>
+                        </button>
+                        <button type="button" id="btnOpenChangelog" class="btn-update-secondary">
+                            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            <span>История изменений (Changelog)</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGELOG MODAL -->
+    <div id="changelogModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card settings-modal-card">
+            <div class="modal-header">
+                <div id="changelogModalTitle" class="modal-title">ИСТОРИЯ ИЗМЕНЕНИЙ (CHANGELOG)</div>
+                <button id="btnCloseChangelog" class="btn-modal-close">
+                    <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div id="changelogBody" class="modal-body settings-modal-body">
+                <!-- Populated via JS -->
+            </div>
+            <div id="changelogFooter" class="changelog-footer" style="display: none;">
+                <button id="btnChangelogInstall" class="btn-small-accent">Скачать и установить обновление</button>
             </div>
         </div>
     </div>
@@ -603,5 +746,6 @@
 
     <script src="/static/sounds.js"></script>
     <script src="/static/app.js"></script>
+    <script src="/static/app_v2.js"></script>
 </body>
 </html>

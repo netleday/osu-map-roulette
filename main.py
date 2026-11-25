@@ -24,7 +24,8 @@ from app.paths import (
     CACHE_DIR,
     HISTORY_FILE,
     LOCAL_MAPS_CACHE,
-    LOG_FILE
+    LOG_FILE,
+    CUSTOM_BG_DIR
 )
 
 CRASH_LOG_PATH = Path(os.environ.get("LOCALAPPDATA", ".")) / "osu_map_roulette" / "crash.log"
@@ -94,7 +95,7 @@ import webbrowser
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional, List
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -108,6 +109,8 @@ from app.downloader import download_osz, launch_in_lazer
 from app.collections import export_session_to_osdb, COLLECTIONS_DIR
 from app.multiplayer import lobby_manager
 from app.overlay import overlay_controller
+from app.version import APP_VERSION
+from app.updater import update_manager
 
 CURRENT_SPIN_STATE: Dict[str, Any] = {
     "current_card": None,
@@ -336,6 +339,121 @@ async def api_collections_open_folder():
 async def api_tilt_status():
     since = CURRENT_SPIN_STATE.get("roll_time")
     return check_lazer_tilt(since_timestamp=since)
+
+
+# ========================================================
+# REEL PREVIEW & CUSTOM BACKGROUNDS API
+# ========================================================
+class PreviewRequest(BaseModel):
+    star_min: float = 3.5
+    star_max: float = 4.8
+    bpm_min: float = 120.0
+    bpm_max: float = 260.0
+    length_min: int = 30
+    length_max: int = 300
+    status: str = "ranked"
+
+@app.post("/api/reel/preview")
+async def api_reel_preview(req: PreviewRequest):
+    if not LOCAL_MAPS_CACHE.exists():
+        return {"cards": []}
+    try:
+        maps = json.loads(LOCAL_MAPS_CACHE.read_text(encoding="utf-8"))
+    except Exception:
+        return {"cards": []}
+    if not isinstance(maps, list) or not maps:
+        return {"cards": []}
+
+    st_filter = (req.status or "ranked").lower()
+    matched = []
+    for m in maps:
+        sr = float(m.get("difficulty_rating") or 0.0)
+        bpm = float(m.get("bpm") or 0.0)
+        length = int(m.get("total_length") or 0)
+        status = str(m.get("status") or "").lower()
+
+        if sr < req.star_min or sr > req.star_max:
+            continue
+        if bpm < req.bpm_min or bpm > req.bpm_max:
+            continue
+        if length < req.length_min or length > req.length_max:
+            continue
+        if st_filter == "ranked" and status not in ("ranked", "approved", "qualified"):
+            continue
+        elif st_filter == "loved" and status != "loved":
+            continue
+        elif st_filter == "graveyard" and status not in ("pending", "wip", "graveyard"):
+            continue
+
+        matched.append(m)
+
+    if not matched:
+        return {"cards": []}
+
+    sample = random.sample(matched, min(16, len(matched)))
+    return {"cards": sample}
+
+@app.get("/api/backgrounds/list")
+async def api_backgrounds_list():
+    builtin = [
+        {"id": "bg_1.png", "name": "Маскот", "url": "/static/backgrounds/bg_1.png", "custom": False},
+        {"id": "bg_2.jpg", "name": "Арт #1", "url": "/static/backgrounds/bg_2.jpg", "custom": False},
+        {"id": "bg_3.jpg", "name": "Арт #2", "url": "/static/backgrounds/bg_3.jpg", "custom": False},
+        {"id": "bg_4.jpg", "name": "Арт #3", "url": "/static/backgrounds/bg_4.jpg", "custom": False},
+        {"id": "bg_5.jpg", "name": "Арт #4", "url": "/static/backgrounds/bg_5.jpg", "custom": False},
+    ]
+    customs = []
+    for p in sorted(CUSTOM_BG_DIR.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
+        if p.is_file() and p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp"):
+            customs.append({
+                "id": f"custom:{p.name}",
+                "name": p.stem[:14],
+                "url": f"/api/backgrounds/file/{p.name}",
+                "custom": True
+            })
+    return {"backgrounds": builtin + customs}
+
+@app.post("/api/backgrounds/upload")
+async def api_backgrounds_upload(file: UploadFile = File(...)):
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in (".png", ".jpg", ".jpeg", ".webp"):
+        raise HTTPException(status_code=400, detail="Поддерживаются только .png, .jpg, .jpeg, .webp")
+    safe_name = f"user_bg_{int(time.time())}{ext}"
+    dest = CUSTOM_BG_DIR / safe_name
+    content = await file.read()
+    if len(content) > 15 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Файл слишком большой (макс. 15 МБ)")
+    dest.write_bytes(content)
+    return {
+        "ok": True,
+        "id": f"custom:{safe_name}",
+        "url": f"/api/backgrounds/file/{safe_name}",
+        "name": safe_name
+    }
+
+@app.get("/api/backgrounds/file/{filename}")
+async def api_backgrounds_file(filename: str):
+    clean_name = Path(filename).name
+    target = CUSTOM_BG_DIR / clean_name
+    if not target.exists() or not target.is_file():
+        raise HTTPException(status_code=404, detail="Background not found")
+    return FileResponse(target)
+
+
+# ========================================================
+# UPDATER & CHANGELOG API
+# ========================================================
+@app.get("/api/updater/status")
+async def api_updater_status():
+    return update_manager.get_status()
+
+@app.post("/api/updater/check")
+async def api_updater_check():
+    return update_manager.check_for_updates()
+
+@app.post("/api/updater/install")
+async def api_updater_install():
+    return update_manager.start_download_and_install()
 
 @app.get("/api/profile")
 async def get_profile_endpoint():
@@ -701,7 +819,8 @@ def start_app():
         return
 
     overlay_controller.set_port(port)
-    overlay_controller.start_osu_process_watcher()
+    # Background update check via GitHub Releases API (non-blocking)
+    update_manager.check_for_updates_async()
 
     # Pre-index local lazer library in background thread so startup is instant
     cfg = load_config()

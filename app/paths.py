@@ -26,6 +26,8 @@ CACHE_DIR = DATA_DIR / "cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 CACHE_OSU_DIR = CACHE_DIR / "osu_files"
 CACHE_OSU_DIR.mkdir(parents=True, exist_ok=True)
+CUSTOM_BG_DIR = DATA_DIR / "custom_backgrounds"
+CUSTOM_BG_DIR.mkdir(parents=True, exist_ok=True)
 
 CONFIG_FILE = DATA_DIR / "config.json"
 HISTORY_FILE = CACHE_DIR / "history.json"
